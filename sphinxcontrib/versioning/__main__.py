@@ -325,6 +325,7 @@ def build(config, rel_source, destination, **options):
               help='If specified "git rm" will delete all files in REL_DEST except for these. Specify multiple times '
                    'for more. Paths are relative to REL_DEST in DEST_BRANCH.')
 @click.option('-P', '--push-remote', help='Push built docs to this remote. Default is origin.')
+@click.option('-mc', '--use-master-conf', help="Use conf.py file from master branch", is_flag=True)
 @click.argument('REL_SOURCE', nargs=-1, required=True)
 @click.argument('DEST_BRANCH')
 @click.argument('REL_DEST')
@@ -377,7 +378,7 @@ def push(ctx, config, rel_source, dest_branch, rel_dest, **options):
                 raise HandledError
 
             log.info('Building docs...')
-            ctx.invoke(build, rel_source=rel_source, destination=os.path.join(temp_dir, rel_dest))
+            ctx.invoke(build, rel_source=rel_source, destination=os.path.join(temp_dir, rel_dest), options=config)
             versions = config.pop('versions')
 
             log.info('Attempting to push to branch %s on remote repository.', dest_branch)

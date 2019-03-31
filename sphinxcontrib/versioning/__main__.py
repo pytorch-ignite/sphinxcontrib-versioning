@@ -114,6 +114,7 @@ class ClickCommand(click.Command):
 @click.option('-g', '--git-root', help='Path to directory in the local repo. Default is CWD.', type=IS_EXISTS_DIR)
 @click.option('-l', '--local-conf', help='Path to conf.py for SCVersioning to read config from.', type=IS_EXISTS_FILE)
 @click.option('-L', '--no-local-conf', help="Don't attempt to search for nor load a local conf.py file.", is_flag=True)
+@click.option('-mc', '--use-master-conf', help="Use conf.py file from master branch", is_flag=True)
 @click.option('-N', '--no-colors', help='Disable colors in the terminal output.', is_flag=True)
 @click.option('-v', '--verbose', help='Debug logging. Specify more than once for more logging.', count=True)
 @click.version_option(version=__version__)
@@ -301,7 +302,7 @@ def build(config, rel_source, destination, **options):
 
     # Pre-build.
     log.info("Pre-running Sphinx to collect versions' master_doc and other info.")
-    exported_root = pre_build(config.git_root, versions)
+    exported_root = pre_build(config.git_root, versions, config.use_master_conf)
     if config.banner_main_ref and config.banner_main_ref not in [r['name'] for r in versions.remotes]:
         log.warning('Banner main ref %s failed during pre-run. Disabling banner.', config.banner_main_ref)
         config.update(dict(banner_greatest_tag=False, banner_main_ref=None, banner_recent_tag=False, show_banner=False),

@@ -26,6 +26,7 @@ class Config(object):
         self.invert = False
         self.no_colors = False
         self.no_local_conf = False
+        self.use_master_conf = False
         self.recent_tag = False
         self.show_banner = False
 

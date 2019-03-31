@@ -97,7 +97,7 @@ def gather_git_info(root, conf_rel_paths, whitelist_branches, whitelist_tags):
     return whitelisted_remotes
 
 
-def pre_build(local_root, versions):
+def pre_build(local_root, versions, use_master_conf=False):
     """Build docs for all versions to determine root directory and master_doc names.
 
     Need to build docs to (a) avoid filename collision with files from root_ref and branch/tag names and (b) determine
@@ -141,6 +141,10 @@ def pre_build(local_root, versions):
     # Get found_docs and master_doc values for all versions.
     for remote in list(versions.remotes):
         log.debug('Partially running sphinx-build to read configuration for: %s', remote['name'])
+        if use_master_conf:
+            import shutil
+            local_conf_file = remote['conf_rel_path']
+            shutil.copy(local_conf_file, os.path.join(exported_root, remote['sha'], remote['conf_rel_path']));
         source = os.path.dirname(os.path.join(exported_root, remote['sha'], remote['conf_rel_path']))
         try:
             config = read_config(source, remote['name'])

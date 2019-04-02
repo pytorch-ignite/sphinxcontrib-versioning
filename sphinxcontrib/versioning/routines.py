@@ -120,12 +120,19 @@ def pre_build(local_root, versions, use_master_conf=False):
         target = os.path.join(exported_root, sha)
         log.debug('Exporting %s to temporary directory.', sha)
         export(local_root, sha, target)
-
+    
     if use_master_conf:
         for remote in list(versions.remotes):
             import shutil
             local_conf_file = remote['conf_rel_path']
-            shutil.copy(local_conf_file, os.path.join(exported_root, remote['sha'], remote['conf_rel_path']));
+            filename = os.path.join(exported_root, remote['sha'], remote['conf_rel_path'])
+            shutil.copy(local_conf_file, filename);
+            if remote['name'] == 'master':
+                s = open(filename).read()
+                s = s.replace("version = ignite.__version__", "version = 'master (' + ignite.__version__ + ' )'")
+                f = open(filename, 'w')
+                f.write(s)
+                f.close()
 
     # Build root.
     remote = versions[Config.from_context().root_ref]

@@ -121,6 +121,12 @@ def pre_build(local_root, versions, use_master_conf=False):
         log.debug('Exporting %s to temporary directory.', sha)
         export(local_root, sha, target)
 
+    if use_master_conf:
+        for remote in list(versions.remotes):
+            import shutil
+            local_conf_file = remote['conf_rel_path']
+            shutil.copy(local_conf_file, os.path.join(exported_root, remote['sha'], remote['conf_rel_path']));
+
     # Build root.
     remote = versions[Config.from_context().root_ref]
     with TempDir() as temp_dir:
@@ -141,10 +147,6 @@ def pre_build(local_root, versions, use_master_conf=False):
     # Get found_docs and master_doc values for all versions.
     for remote in list(versions.remotes):
         log.debug('Partially running sphinx-build to read configuration for: %s', remote['name'])
-        if use_master_conf:
-            import shutil
-            local_conf_file = remote['conf_rel_path']
-            shutil.copy(local_conf_file, os.path.join(exported_root, remote['sha'], remote['conf_rel_path']));
         source = os.path.dirname(os.path.join(exported_root, remote['sha'], remote['conf_rel_path']))
         try:
             config = read_config(source, remote['name'])

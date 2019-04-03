@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import subprocess
+import sys
 
 from sphinxcontrib.versioning.git import export, fetch_commits, filter_and_date, GitError, list_remote
 from sphinxcontrib.versioning.lib import Config, HandledError, TempDir
@@ -120,26 +121,23 @@ def pre_build(local_root, versions, use_master_conf=False):
         target = os.path.join(exported_root, sha)
         log.debug('Exporting %s to temporary directory.', sha)
         export(local_root, sha, target)
-    
+
+    # Copy conf.py from local master to all branches and tags
     if use_master_conf:
         for remote in list(versions.remotes):
             import shutil
             local_conf_file = remote['conf_rel_path']
             filename = os.path.join(exported_root, remote['sha'], remote['conf_rel_path'])
             shutil.copy(local_conf_file, filename);
-            if remote['name'] == 'master':
-                s = open(filename).read()
-                s = s.replace("version = ignite.__version__", "version = 'master (' + ignite.__version__ + ' )'")
-                f = open(filename, 'w')
-                f.write(s)
-                f.close()
 
     # Build root.
     remote = versions[Config.from_context().root_ref]
     with TempDir() as temp_dir:
         log.debug('Building root (before setting root_dirs) in temporary directory: %s', temp_dir)
         source = os.path.dirname(os.path.join(exported_root, remote['sha'], remote['conf_rel_path']))
+        os.environ['code_version'] = remote['name']
         build(source, temp_dir, versions, remote['name'], True)
+        os.environ.pop('code_version');
         existing = os.listdir(temp_dir)
 
     # Define root_dir for all versions to avoid file name collisions.
@@ -181,7 +179,9 @@ def build_all(exported_root, destination, versions):
         remote = versions[Config.from_context().root_ref]
         log.info('Building root: %s', remote['name'])
         source = os.path.dirname(os.path.join(exported_root, remote['sha'], remote['conf_rel_path']))
+        os.environ['code_version'] = remote['name']
         build(source, destination, versions, remote['name'], True)
+        os.environ.pop('code_version');
 
         # Build all refs.
         for remote in list(versions.remotes):
@@ -189,7 +189,9 @@ def build_all(exported_root, destination, versions):
             source = os.path.dirname(os.path.join(exported_root, remote['sha'], remote['conf_rel_path']))
             target = os.path.join(destination, remote['root_dir'])
             try:
+                os.environ['code_version'] = remote['name']
                 build(source, target, versions, remote['name'], False)
+                os.environ.pop('code_version');
             except HandledError:
                 log.warning('Skipping. Will not be building %s. Rebuilding everything.', remote['name'])
                 versions.remotes.pop(versions.remotes.index(remote))

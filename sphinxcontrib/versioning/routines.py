@@ -98,7 +98,7 @@ def gather_git_info(root, conf_rel_paths, whitelist_branches, whitelist_tags):
     return whitelisted_remotes
 
 
-def pre_build(local_root, versions, use_master_conf=False):
+def pre_build(local_root, versions, use_master_conf=False, use_master_templates=False):
     """Build docs for all versions to determine root directory and master_doc names.
 
     Need to build docs to (a) avoid filename collision with files from root_ref and branch/tag names and (b) determine
@@ -124,11 +124,27 @@ def pre_build(local_root, versions, use_master_conf=False):
 
     # Copy conf.py from local master to all branches and tags
     if use_master_conf:
+        master_remote = [r for r in list(versions.remotes) if r['name'] == "master"]
+        assert len(master_remote) == 1
+        master_remote = master_remote[0]
+        master_conf_file = master_remote['conf_rel_path']
         for remote in list(versions.remotes):
             import shutil
-            local_conf_file = remote['conf_rel_path']
             filename = os.path.join(exported_root, remote['sha'], remote['conf_rel_path'])
-            shutil.copy(local_conf_file, filename);
+            shutil.copy(master_conf_file, filename)
+
+    if use_master_templates:
+        master_remote = [r for r in list(versions.remotes) if r['name'] == "master"]
+        assert len(master_remote) == 1
+        master_remote = master_remote[0]
+        rel_path = os.path.dirname(master_remote['conf_rel_path'])
+        master_templates = os.path.join(rel_path, "_templates")
+        if os.path.exists(master_templates) and os.path.isdir(master_templates):
+            for remote in list(versions.remotes):
+                import shutil
+                dst_path = os.path.join(exported_root, remote['sha'], rel_path, "_templates")
+                if not os.path.exists(dst_path):
+                    shutil.copytree(master_templates, dst_path)
 
     # Build root.
     remote = versions[Config.from_context().root_ref]
@@ -137,7 +153,7 @@ def pre_build(local_root, versions, use_master_conf=False):
         source = os.path.dirname(os.path.join(exported_root, remote['sha'], remote['conf_rel_path']))
         os.environ['code_version'] = remote['name']
         build(source, temp_dir, versions, remote['name'], True)
-        os.environ.pop('code_version');
+        os.environ.pop('code_version')
         existing = os.listdir(temp_dir)
 
     # Define root_dir for all versions to avoid file name collisions.
@@ -181,7 +197,7 @@ def build_all(exported_root, destination, versions):
         source = os.path.dirname(os.path.join(exported_root, remote['sha'], remote['conf_rel_path']))
         os.environ['code_version'] = remote['name']
         build(source, destination, versions, remote['name'], True)
-        os.environ.pop('code_version');
+        os.environ.pop('code_version')
 
         # Build all refs.
         for remote in list(versions.remotes):
@@ -191,7 +207,7 @@ def build_all(exported_root, destination, versions):
             try:
                 os.environ['code_version'] = remote['name']
                 build(source, target, versions, remote['name'], False)
-                os.environ.pop('code_version');
+                os.environ.pop('code_version')
             except HandledError:
                 log.warning('Skipping. Will not be building %s. Rebuilding everything.', remote['name'])
                 versions.remotes.pop(versions.remotes.index(remote))

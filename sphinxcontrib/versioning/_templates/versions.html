@@ -1,4 +1,3 @@
-{% if html_theme == 'sphinx_rtd_theme' %}
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
@@ -24,11 +23,3 @@
         {%- endif %}
     </div>
 </div>
-{% else %}
-<h3>{{ _('Versions') }}</h3>
-<ul>
-    {%- for name, url in versions %}
-    <li><a href="{{ url }}">{{ name }}</a></li>
-    {%- endfor %}
-</ul>
-{%- endif %}

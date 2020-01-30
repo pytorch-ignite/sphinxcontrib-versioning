@@ -143,8 +143,9 @@ def pre_build(local_root, versions, use_master_conf=False, use_master_templates=
             for remote in list(versions.remotes):
                 import shutil
                 dst_path = os.path.join(exported_root, remote['sha'], rel_path, "_templates")
-                if not os.path.exists(dst_path):
-                    shutil.copytree(master_templates, dst_path)
+                if os.path.exists(dst_path):
+                    shutil.rmtree(dst_path)
+                shutil.copytree(master_templates, dst_path)
 
     # Build root.
     remote = versions[Config.from_context().root_ref]

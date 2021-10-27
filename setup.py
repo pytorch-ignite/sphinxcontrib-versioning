@@ -10,7 +10,7 @@ import re
 from setuptools import Command, setup
 
 IMPORT = 'sphinxcontrib.versioning'
-INSTALL_REQUIRES = ['click', 'colorclass', 'sphinx']
+INSTALL_REQUIRES = ['click', 'colorclass', 'sphinx==4.2.0']
 LICENSE = 'MIT'
 NAME = 'sphinxcontrib-versioning'
 VERSION = '2.2.1'

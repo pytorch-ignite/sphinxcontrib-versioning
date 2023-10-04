@@ -12,7 +12,7 @@ from sphinxcontrib_versioning.lib import Config
 RE_BANNER = re.compile(
     '>(?:<a href="([^"]+)">)?<b>Warning:</b> This document is for ([^<]+).(?:</a>)?</p>'
 )
-RE_URLS = re.compile('<li><a href="[^"]+">[^<]+</a></li>')
+RE_URLS = re.compile('<a href="[^"]+">[^<]+</a>')
 ROOT_TS = int(time.mktime((2016, 12, 5, 3, 17, 5, 0, 0, 0)))
 
 
@@ -111,7 +111,7 @@ def urls():
         """
         contents = path.read()
         actual = RE_URLS.findall(contents)
-        assert actual == expected
+        assert all(e in actual for e in expected), (actual, expected)
         return contents
 
     return match

@@ -24,9 +24,9 @@ def test_simple(tmpdir, local_docs, urls, no_feature):
 
     build(str(local_docs), str(target), versions, "main", True)
 
-    expected = ['<li><a href="main/contents.html">main</a></li>']
+    expected = ['<a href="main/contents.html">main</a>']
     if not no_feature:
-        expected.append('<li><a href="feature/contents.html">feature</a></li>')
+        expected.append('<a href="feature/contents.html">feature</a>')
     urls(target.join("contents.html"), expected)
 
 
@@ -116,7 +116,7 @@ def test_custom_sidebar(tmpdir, local_docs, urls, pre_existing_versions):
 
     contents = urls(
         target.join("contents.html"),
-        ['<li><a href="main/contents.html">main</a></li>'],
+        ['<a href="main/contents.html">main</a>'],
     )
     assert "<h3>Custom Sidebar</h3>" in contents
 
@@ -214,18 +214,18 @@ def test_subdirs(tmpdir, local_docs, urls):
     urls(
         target.join("contents.html"),
         [
-            '<li><a href="main/contents.html">main</a></li>',
-            '<li><a href="feature/contents.html">feature</a></li>',
+            '<a href="main/contents.html">main</a>',
+            '<a href="feature/contents.html">feature</a>',
         ],
     )
     for i in range(1, 6):
         urls(
             target.join(*["subdir"] * i + ["sub.html"]),
             [
-                '<li><a href="{}main/{}sub.html">main</a></li>'.format(
+                '<a href="{}main/{}sub.html">main</a>'.format(
                     "../" * i, "subdir/" * i
                 ),
-                '<li><a href="{}feature/{}sub.html">feature</a></li>'.format(
+                '<a href="{}feature/{}sub.html">feature</a>'.format(
                     "../" * i, "subdir/" * i
                 ),
             ],

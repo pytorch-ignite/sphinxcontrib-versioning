@@ -18,15 +18,18 @@ def test(config, local_docs, mode):
 
     if mode == "overflow":
         local_docs.join("contents.rst").rename(local_docs.join("index.rst"))
-        config.overflow += ("-D", "main_doc=index")
+        config.overflow += ("-D", "master_doc=index")
         expected = "index"
     elif mode == "conf.py":
         local_docs.join("contents.rst").rename(local_docs.join("index2.rst"))
-        local_docs.join("conf.py").write('main_doc = "index2"\n')
+        local_docs.join("conf.py").write('master_doc = "index2"\n')
         expected = "index2"
 
     config = read_config(str(local_docs), "main")
-    assert config["main_doc"] == expected
+    if mode == "default":
+        assert config["master_doc"] == "index"
+    else:
+        assert config["master_doc"] == expected
     assert sorted(config["found_docs"]) == [expected, "one", "three", "two"]
 
 

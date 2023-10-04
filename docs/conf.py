@@ -24,7 +24,7 @@ html_context = dict(
     display_github=True,
     github_repo=os.environ.get("TRAVIS_REPO_SLUG", "/" + project).split("/", 1)[1],
     github_user=os.environ.get("TRAVIS_REPO_SLUG", "robpol86/").split("/", 1)[0],
-    github_version=os.environ.get("TRAVIS_BRANCH", "master"),
+    github_version=os.environ.get("TRAVIS_BRANCH", "main"),
     source_suffix=".rst",
 )
 html_copy_source = False

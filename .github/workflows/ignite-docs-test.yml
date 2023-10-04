@@ -53,7 +53,7 @@ jobs:
       - name: Run Integration test
         run: |
           git clone https://github.com/pytorch/ignite.git /tmp/ignite
-          cd /tmp/ignite/docs
+          cd /tmp/ignite/
           # Source: https://github.com/pytorch/ignite/blob/9324dab8b6299269b8dd3dbecee49a0e6ffbab70/.github/workflows/docs.yml
           bash .github/workflows/install_docs_deps.sh
           bash .github/workflows/build_docs.sh

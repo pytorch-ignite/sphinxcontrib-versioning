@@ -2,7 +2,7 @@
 
 import pytest
 
-from sphinxcontrib.versioning.git import GitError, list_remote
+from sphinxcontrib_versioning.git import GitError, list_remote
 
 
 def test_bad_remote(tmpdir, local_empty):
@@ -14,19 +14,21 @@ def test_bad_remote(tmpdir, local_empty):
     # Test no remotes.
     with pytest.raises(GitError) as exc:
         list_remote(str(local_empty))
-    assert 'No remote configured to list refs from.' in exc.value.output
+    assert "No remote configured to list refs from." in exc.value.output
 
     # Test wrong name.
-    pytest.run(local_empty, ['git', 'remote', 'add', 'something', tmpdir.ensure_dir('empty')])
+    pytest.run(
+        local_empty, ["git", "remote", "add", "something", tmpdir.ensure_dir("empty")]
+    )
     with pytest.raises(GitError) as exc:
         list_remote(str(local_empty))
-    assert 'No remote configured to list refs from.' in exc.value.output
+    assert "No remote configured to list refs from." in exc.value.output
 
     # Invalid remote.
-    pytest.run(local_empty, ['git', 'remote', 'rename', 'something', 'origin'])
+    pytest.run(local_empty, ["git", "remote", "rename", "something", "origin"])
     with pytest.raises(GitError) as exc:
         list_remote(str(local_empty))
-    assert 'does not appear to be a git repository' in exc.value.output
+    assert "does not appear to be a git repository" in exc.value.output
 
 
 def test_empty_remote(local_commit, remote):
@@ -35,14 +37,14 @@ def test_empty_remote(local_commit, remote):
     :param local_commit: conftest fixture.
     :param remote: conftest fixture.
     """
-    pytest.run(local_commit, ['git', 'remote', 'add', 'origin', remote])
+    pytest.run(local_commit, ["git", "remote", "add", "origin", remote])
     remotes = list_remote(str(local_commit))
     assert not remotes
 
     # Push.
-    pytest.run(local_commit, ['git', 'push', 'origin', 'master'])
+    pytest.run(local_commit, ["git", "push", "origin", "main"])
     remotes = list_remote(str(local_commit))
-    assert [i[1:] for i in remotes] == [['master', 'heads']]
+    assert [i[1:] for i in remotes] == [["main", "heads"]]
 
 
 def test_branch_tags(local):
@@ -50,31 +52,31 @@ def test_branch_tags(local):
 
     :param local: conftest fixture.
     """
-    sha = pytest.run(local, ['git', 'rev-parse', 'HEAD']).strip()
+    sha = pytest.run(local, ["git", "rev-parse", "HEAD"]).strip()
     remotes = list_remote(str(local))
     expected = [
-        [sha, 'feature', 'heads'],
-        [sha, 'master', 'heads'],
-        [sha, 'annotated_tag', 'tags'],
-        [sha, 'light_tag', 'tags'],
+        [sha, "feature", "heads"],
+        [sha, "main", "heads"],
+        [sha, "annotated_tag", "tags"],
+        [sha, "light_tag", "tags"],
     ]
     assert remotes == expected
 
-    # New commit to master locally.
-    local.join('README').write('changed')
-    pytest.run(local, ['git', 'commit', '-am', 'Changed'])
+    # New commit to main locally.
+    local.join("README").write("changed")
+    pytest.run(local, ["git", "commit", "-am", "Changed"])
     remotes = list_remote(str(local))
     assert remotes == expected
 
     # Push.
-    pytest.run(local, ['git', 'push', 'origin', 'master'])
-    sha2 = pytest.run(local, ['git', 'rev-parse', 'HEAD']).strip()
+    pytest.run(local, ["git", "push", "origin", "main"])
+    sha2 = pytest.run(local, ["git", "rev-parse", "HEAD"]).strip()
     remotes = list_remote(str(local))
     expected = [
-        [sha, 'feature', 'heads'],
-        [sha2, 'master', 'heads'],
-        [sha, 'annotated_tag', 'tags'],
-        [sha, 'light_tag', 'tags'],
+        [sha, "feature", "heads"],
+        [sha2, "main", "heads"],
+        [sha, "annotated_tag", "tags"],
+        [sha, "light_tag", "tags"],
     ]
     assert remotes == expected
 
@@ -87,29 +89,29 @@ def test_outdated_local(tmpdir, local, remote):
     :param remote: conftest fixture.
     """
     # Setup separate local repo now before pushing changes to it from the primary local repo.
-    local_outdated = tmpdir.ensure_dir('local_outdated')
-    pytest.run(local_outdated, ['git', 'clone', '--branch', 'master', remote, '.'])
-    sha = pytest.run(local_outdated, ['git', 'rev-parse', 'HEAD']).strip()
+    local_outdated = tmpdir.ensure_dir("local_outdated")
+    pytest.run(local_outdated, ["git", "clone", "--branch", "main", remote, "."])
+    sha = pytest.run(local_outdated, ["git", "rev-parse", "HEAD"]).strip()
     remotes = list_remote(str(local_outdated))
     expected = [
-        [sha, 'feature', 'heads'],
-        [sha, 'master', 'heads'],
-        [sha, 'annotated_tag', 'tags'],
-        [sha, 'light_tag', 'tags'],
+        [sha, "feature", "heads"],
+        [sha, "main", "heads"],
+        [sha, "annotated_tag", "tags"],
+        [sha, "light_tag", "tags"],
     ]
     assert remotes == expected
 
     # Make changes from primary local and push to common remote.
-    local.join('README').write('changed')
-    pytest.run(local, ['git', 'commit', '-am', 'Changed'])
-    pytest.run(local, ['git', 'push', 'origin', 'master'])
-    sha2 = pytest.run(local, ['git', 'rev-parse', 'HEAD']).strip()
+    local.join("README").write("changed")
+    pytest.run(local, ["git", "commit", "-am", "Changed"])
+    pytest.run(local, ["git", "push", "origin", "main"])
+    sha2 = pytest.run(local, ["git", "rev-parse", "HEAD"]).strip()
     remotes = list_remote(str(local))
     expected = [
-        [sha, 'feature', 'heads'],
-        [sha2, 'master', 'heads'],
-        [sha, 'annotated_tag', 'tags'],
-        [sha, 'light_tag', 'tags'],
+        [sha, "feature", "heads"],
+        [sha2, "main", "heads"],
+        [sha, "annotated_tag", "tags"],
+        [sha, "light_tag", "tags"],
     ]
     assert remotes == expected
 

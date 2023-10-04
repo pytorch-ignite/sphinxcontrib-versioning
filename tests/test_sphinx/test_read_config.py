@@ -2,32 +2,32 @@
 
 import pytest
 
-from sphinxcontrib.versioning.lib import HandledError
-from sphinxcontrib.versioning.sphinx_ import read_config
+from sphinxcontrib_versioning.lib import HandledError
+from sphinxcontrib_versioning.sphinx_ import read_config
 
 
-@pytest.mark.parametrize('mode', ['default', 'overflow', 'conf.py'])
+@pytest.mark.parametrize("mode", ["default", "overflow", "conf.py"])
 def test(config, local_docs, mode):
     """Verify working.
 
-    :param sphinxcontrib.versioning.lib.Config config: conftest fixture.
+    :param sphinxcontrib_versioning.lib.Config config: conftest fixture.
     :param local_docs: conftest fixture.
     :param str mode: Test scenario.
     """
-    expected = 'contents'
+    expected = "contents"
 
-    if mode == 'overflow':
-        local_docs.join('contents.rst').rename(local_docs.join('index.rst'))
-        config.overflow += ('-D', 'master_doc=index')
-        expected = 'index'
-    elif mode == 'conf.py':
-        local_docs.join('contents.rst').rename(local_docs.join('index2.rst'))
-        local_docs.join('conf.py').write('master_doc = "index2"\n')
-        expected = 'index2'
+    if mode == "overflow":
+        local_docs.join("contents.rst").rename(local_docs.join("index.rst"))
+        config.overflow += ("-D", "main_doc=index")
+        expected = "index"
+    elif mode == "conf.py":
+        local_docs.join("contents.rst").rename(local_docs.join("index2.rst"))
+        local_docs.join("conf.py").write('main_doc = "index2"\n')
+        expected = "index2"
 
-    config = read_config(str(local_docs), 'master')
-    assert config['master_doc'] == expected
-    assert sorted(config['found_docs']) == [expected, 'one', 'three', 'two']
+    config = read_config(str(local_docs), "main")
+    assert config["main_doc"] == expected
+    assert sorted(config["found_docs"]) == [expected, "one", "three", "two"]
 
 
 def test_sphinx_error(local_docs):
@@ -35,6 +35,6 @@ def test_sphinx_error(local_docs):
 
     :param local_docs: conftest fixture.
     """
-    local_docs.join('conf.py').write('undefined')
+    local_docs.join("conf.py").write("undefined")
     with pytest.raises(HandledError):
-        read_config(str(local_docs), 'master')
+        read_config(str(local_docs), "main")

@@ -7,11 +7,17 @@ import re
 import subprocess
 import sys
 
-from sphinxcontrib.versioning.git import export, fetch_commits, filter_and_date, GitError, list_remote
-from sphinxcontrib.versioning.lib import Config, HandledError, TempDir
-from sphinxcontrib.versioning.sphinx_ import build, read_config
+from sphinxcontrib_versioning.git import (
+    export,
+    fetch_commits,
+    filter_and_date,
+    GitError,
+    list_remote,
+)
+from sphinxcontrib_versioning.lib import Config, HandledError, TempDir
+from sphinxcontrib_versioning.sphinx_ import build, read_config
 
-RE_INVALID_FILENAME = re.compile(r'[^0-9A-Za-z.-]')
+RE_INVALID_FILENAME = re.compile(r"[^0-9A-Za-z.-]")
 
 
 def read_local_conf(local_conf):
@@ -25,15 +31,19 @@ def read_local_conf(local_conf):
     log = logging.getLogger(__name__)
 
     # Attempt to read.
-    log.info('Reading config from %s...', local_conf)
+    log.info("Reading config from %s...", local_conf)
     try:
-        config = read_config(os.path.dirname(local_conf), '<local>')
+        config = read_config(os.path.dirname(local_conf), "<local>")
     except HandledError:
-        log.warning('Unable to read file, continuing with only CLI args.')
+        log.warning("Unable to read file, continuing with only CLI args.")
         return dict()
 
     # Filter and return.
-    return {k[4:]: v for k, v in config.items() if k.startswith('scv_') and not k[4:].startswith('_')}
+    return {
+        k[4:]: v
+        for k, v in config.items()
+        if k.startswith("scv_") and not k[4:].startswith("_")
+    }
 
 
 def gather_git_info(root, conf_rel_paths, whitelist_branches, whitelist_tags):
@@ -52,48 +62,63 @@ def gather_git_info(root, conf_rel_paths, whitelist_branches, whitelist_tags):
     log = logging.getLogger(__name__)
 
     # List remote.
-    log.info('Getting list of all remote branches/tags...')
+    log.info("Getting list of all remote branches/tags...")
     try:
         remotes = list_remote(root)
     except GitError as exc:
         log.error(exc.message)
         log.error(exc.output)
         raise HandledError
-    log.info('Found: %s', ' '.join(i[1] for i in remotes))
+    log.info("Found: %s", " ".join(i[1] for i in remotes))
 
     # Filter and date.
     try:
         try:
             dates_paths = filter_and_date(root, conf_rel_paths, (i[0] for i in remotes))
         except GitError:
-            log.info('Need to fetch from remote...')
+            log.info("Need to fetch from remote...")
             fetch_commits(root, remotes)
             try:
-                dates_paths = filter_and_date(root, conf_rel_paths, (i[0] for i in remotes))
+                dates_paths = filter_and_date(
+                    root, conf_rel_paths, (i[0] for i in remotes)
+                )
             except GitError as exc:
                 log.error(exc.message)
                 log.error(exc.output)
                 raise HandledError
     except subprocess.CalledProcessError as exc:
-        log.debug(json.dumps(dict(command=exc.cmd, cwd=root, code=exc.returncode, output=exc.output)))
-        log.error('Failed to get dates for all remote commits.')
+        log.debug(
+            json.dumps(
+                dict(command=exc.cmd, cwd=root, code=exc.returncode, output=exc.output)
+            )
+        )
+        log.error("Failed to get dates for all remote commits.")
         raise HandledError
-    filtered_remotes = [[i[0], i[1], i[2], ] + dates_paths[i[0]] for i in remotes if i[0] in dates_paths]
-    log.info('With docs: %s', ' '.join(i[1] for i in filtered_remotes))
+    filtered_remotes = [
+        [
+            i[0],
+            i[1],
+            i[2],
+        ]
+        + dates_paths[i[0]]
+        for i in remotes
+        if i[0] in dates_paths
+    ]
+    log.info("With docs: %s", " ".join(i[1] for i in filtered_remotes))
     if not whitelist_branches and not whitelist_tags:
         return filtered_remotes
 
     # Apply whitelist.
     whitelisted_remotes = list()
     for remote in filtered_remotes:
-        if remote[2] == 'heads' and whitelist_branches:
+        if remote[2] == "heads" and whitelist_branches:
             if not any(re.search(p, remote[1]) for p in whitelist_branches):
                 continue
-        if remote[2] == 'tags' and whitelist_tags:
+        if remote[2] == "tags" and whitelist_tags:
             if not any(re.search(p, remote[1]) for p in whitelist_tags):
                 continue
         whitelisted_remotes.append(remote)
-    log.info('Passed whitelisting: %s', ' '.join(i[1] for i in whitelisted_remotes))
+    log.info("Passed whitelisting: %s", " ".join(i[1] for i in whitelisted_remotes))
 
     return whitelisted_remotes
 
@@ -108,7 +133,7 @@ def pre_build(local_root, versions, use_master_conf=False, use_master_templates=
     Exports all commits into a temporary directory and returns the path to avoid re-exporting during the final build.
 
     :param str local_root: Local path to git root directory.
-    :param sphinxcontrib.versioning.versions.Versions versions: Versions class instance.
+    :param sphinxcontrib_versioning.versions.Versions versions: Versions class instance.
 
     :return: Tempdir path with exported commits as subdirectories.
     :rtype: str
@@ -117,32 +142,38 @@ def pre_build(local_root, versions, use_master_conf=False, use_master_templates=
     exported_root = TempDir(True).name
 
     # Extract all.
-    for sha in {r['sha'] for r in versions.remotes}:
+    for sha in {r["sha"] for r in versions.remotes}:
         target = os.path.join(exported_root, sha)
-        log.debug('Exporting %s to temporary directory.', sha)
+        log.debug("Exporting %s to temporary directory.", sha)
         export(local_root, sha, target)
 
     # Copy conf.py from local master to all branches and tags
     if use_master_conf:
-        master_remote = [r for r in list(versions.remotes) if r['name'] == "master"]
+        master_remote = [r for r in list(versions.remotes) if r["name"] == "master"]
         assert len(master_remote) == 1
         master_remote = master_remote[0]
-        master_conf_file = master_remote['conf_rel_path']
+        master_conf_file = master_remote["conf_rel_path"]
         for remote in list(versions.remotes):
             import shutil
-            filename = os.path.join(exported_root, remote['sha'], remote['conf_rel_path'])
+
+            filename = os.path.join(
+                exported_root, remote["sha"], remote["conf_rel_path"]
+            )
             shutil.copy(master_conf_file, filename)
 
     if use_master_templates:
-        master_remote = [r for r in list(versions.remotes) if r['name'] == "master"]
+        master_remote = [r for r in list(versions.remotes) if r["name"] == "master"]
         assert len(master_remote) == 1
         master_remote = master_remote[0]
-        rel_path = os.path.dirname(master_remote['conf_rel_path'])
+        rel_path = os.path.dirname(master_remote["conf_rel_path"])
         master_templates = os.path.join(rel_path, "_templates")
         if os.path.exists(master_templates) and os.path.isdir(master_templates):
             for remote in list(versions.remotes):
                 import shutil
-                dst_path = os.path.join(exported_root, remote['sha'], rel_path, "_templates")
+
+                dst_path = os.path.join(
+                    exported_root, remote["sha"], rel_path, "_templates"
+                )
                 if os.path.exists(dst_path):
                     shutil.rmtree(dst_path)
                 shutil.copytree(master_templates, dst_path)
@@ -150,34 +181,44 @@ def pre_build(local_root, versions, use_master_conf=False, use_master_templates=
     # Build root.
     remote = versions[Config.from_context().root_ref]
     with TempDir() as temp_dir:
-        log.debug('Building root (before setting root_dirs) in temporary directory: %s', temp_dir)
-        source = os.path.dirname(os.path.join(exported_root, remote['sha'], remote['conf_rel_path']))
-        os.environ['code_version'] = remote['name']
-        build(source, temp_dir, versions, remote['name'], True)
-        os.environ.pop('code_version')
+        log.debug(
+            "Building root (before setting root_dirs) in temporary directory: %s",
+            temp_dir,
+        )
+        source = os.path.dirname(
+            os.path.join(exported_root, remote["sha"], remote["conf_rel_path"])
+        )
+        os.environ["code_version"] = remote["name"]
+        build(source, temp_dir, versions, remote["name"], True)
+        os.environ.pop("code_version")
         existing = os.listdir(temp_dir)
 
     # Define root_dir for all versions to avoid file name collisions.
     for remote in versions.remotes:
-        root_dir = RE_INVALID_FILENAME.sub('_', remote['name'])
+        root_dir = RE_INVALID_FILENAME.sub("_", remote["name"])
         while root_dir in existing:
-            root_dir += '_'
-        remote['root_dir'] = root_dir
-        log.debug('%s root directory is %s', remote['name'], root_dir)
+            root_dir += "_"
+        remote["root_dir"] = root_dir
+        log.debug("%s root directory is %s", remote["name"], root_dir)
         existing.append(root_dir)
 
     # Get found_docs and master_doc values for all versions.
     for remote in list(versions.remotes):
-        log.debug('Partially running sphinx-build to read configuration for: %s', remote['name'])
-        source = os.path.dirname(os.path.join(exported_root, remote['sha'], remote['conf_rel_path']))
+        log.debug(
+            "Partially running sphinx-build to read configuration for: %s",
+            remote["name"],
+        )
+        source = os.path.dirname(
+            os.path.join(exported_root, remote["sha"], remote["conf_rel_path"])
+        )
         try:
-            config = read_config(source, remote['name'])
+            config = read_config(source, remote["name"])
         except HandledError:
-            log.warning('Skipping. Will not be building: %s', remote['name'])
+            log.warning("Skipping. Will not be building: %s", remote["name"])
             versions.remotes.pop(versions.remotes.index(remote))
             continue
-        remote['found_docs'] = config['found_docs']
-        remote['master_doc'] = config['master_doc']
+        remote["found_docs"] = config["found_docs"]
+        remote["master_doc"] = config["master_doc"]
 
     return exported_root
 
@@ -187,30 +228,37 @@ def build_all(exported_root, destination, versions):
 
     :param str exported_root: Tempdir path with exported commits as subdirectories.
     :param str destination: Destination directory to copy/overwrite built docs to. Does not delete old files.
-    :param sphinxcontrib.versioning.versions.Versions versions: Versions class instance.
+    :param sphinxcontrib_versioning.versions.Versions versions: Versions class instance.
     """
     log = logging.getLogger(__name__)
 
     while True:
         # Build root.
         remote = versions[Config.from_context().root_ref]
-        log.info('Building root: %s', remote['name'])
-        source = os.path.dirname(os.path.join(exported_root, remote['sha'], remote['conf_rel_path']))
-        os.environ['code_version'] = remote['name']
-        build(source, destination, versions, remote['name'], True)
-        os.environ.pop('code_version')
+        log.info("Building root: %s", remote["name"])
+        source = os.path.dirname(
+            os.path.join(exported_root, remote["sha"], remote["conf_rel_path"])
+        )
+        os.environ["code_version"] = remote["name"]
+        build(source, destination, versions, remote["name"], True)
+        os.environ.pop("code_version")
 
         # Build all refs.
         for remote in list(versions.remotes):
-            log.info('Building ref: %s', remote['name'])
-            source = os.path.dirname(os.path.join(exported_root, remote['sha'], remote['conf_rel_path']))
-            target = os.path.join(destination, remote['root_dir'])
+            log.info("Building ref: %s", remote["name"])
+            source = os.path.dirname(
+                os.path.join(exported_root, remote["sha"], remote["conf_rel_path"])
+            )
+            target = os.path.join(destination, remote["root_dir"])
             try:
-                os.environ['code_version'] = remote['name']
-                build(source, target, versions, remote['name'], False)
-                os.environ.pop('code_version')
+                os.environ["code_version"] = remote["name"]
+                build(source, target, versions, remote["name"], False)
+                os.environ.pop("code_version")
             except HandledError:
-                log.warning('Skipping. Will not be building %s. Rebuilding everything.', remote['name'])
+                log.warning(
+                    "Skipping. Will not be building %s. Rebuilding everything.",
+                    remote["name"],
+                )
                 versions.remotes.pop(versions.remotes.index(remote))
                 break  # Break out of for loop.
         else:

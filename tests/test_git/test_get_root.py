@@ -2,7 +2,7 @@
 
 import pytest
 
-from sphinxcontrib.versioning.git import get_root, GitError, IS_WINDOWS
+from sphinxcontrib_versioning.git import get_root, GitError, IS_WINDOWS
 
 
 def test(tmpdir, local_empty):
@@ -22,7 +22,7 @@ def test(tmpdir, local_empty):
         assert get_root(str(local_empty)) == str(local_empty)
 
     # Test subdir.
-    subdir = local_empty.ensure_dir('subdir')
+    subdir = local_empty.ensure_dir("subdir")
     if IS_WINDOWS:
         assert get_root(str(subdir)).lower() == str(local_empty).lower()
     else:

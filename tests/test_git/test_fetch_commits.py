@@ -2,7 +2,12 @@
 
 import pytest
 
-from sphinxcontrib.versioning.git import fetch_commits, filter_and_date, GitError, list_remote
+from sphinxcontrib_versioning.git import (
+    fetch_commits,
+    filter_and_date,
+    GitError,
+    list_remote,
+)
 
 
 def test_fetch_existing(local):
@@ -12,11 +17,13 @@ def test_fetch_existing(local):
     """
     remotes = list_remote(str(local))
     fetch_commits(str(local), remotes)
-    pytest.run(local, ['git', 'diff-index', '--quiet', 'HEAD', '--'])  # Exit 0 if nothing changed.
+    pytest.run(
+        local, ["git", "diff-index", "--quiet", "HEAD", "--"]
+    )  # Exit 0 if nothing changed.
 
 
-@pytest.mark.usefixtures('outdate_local')
-@pytest.mark.parametrize('clone_branch', [False, True])
+@pytest.mark.usefixtures("outdate_local")
+@pytest.mark.parametrize("clone_branch", [False, True])
 def test_fetch_new(local, local_light, clone_branch):
     """Fetch new commits.
 
@@ -30,21 +37,23 @@ def test_fetch_new(local, local_light, clone_branch):
 
     # Get SHAs and verify not fetched.
     remotes = list_remote(str(local))
-    assert len(remotes) == 7  # master feature light_tag annotated_tag nb_tag orphaned_branch ob_at
+    assert (
+        len(remotes) == 7
+    )  # main feature light_tag annotated_tag nb_tag orphaned_branch ob_at
     shas = {r[0] for r in remotes}
     assert len(shas) == 3
     with pytest.raises(GitError):
-        filter_and_date(str(local), ['README'], shas)
+        filter_and_date(str(local), ["README"], shas)
 
     # Fetch and verify.
     fetch_commits(str(local), remotes)
-    dates = filter_and_date(str(local), ['README'], shas)
+    dates = filter_and_date(str(local), ["README"], shas)
     assert len(dates) == 3
-    pytest.run(local, ['git', 'diff-index', '--quiet', 'HEAD', '--'])
+    pytest.run(local, ["git", "diff-index", "--quiet", "HEAD", "--"])
 
 
-@pytest.mark.usefixtures('outdate_local')
-@pytest.mark.parametrize('clone_branch', [False, True])
+@pytest.mark.usefixtures("outdate_local")
+@pytest.mark.parametrize("clone_branch", [False, True])
 def test_new_branch_tags(local, local_light, clone_branch):
     """Test with new branches and tags unknown to local repo.
 
@@ -57,14 +66,16 @@ def test_new_branch_tags(local, local_light, clone_branch):
 
     # Get SHAs and verify not fetched.
     remotes = list_remote(str(local))
-    assert len(remotes) == 7  # master feature light_tag annotated_tag nb_tag orphaned_branch ob_at
+    assert (
+        len(remotes) == 7
+    )  # main feature light_tag annotated_tag nb_tag orphaned_branch ob_at
     shas = {r[0] for r in remotes}
     assert len(shas) == 3
     with pytest.raises(GitError):
-        filter_and_date(str(local), ['README'], shas)
+        filter_and_date(str(local), ["README"], shas)
 
     # Fetch and verify.
     fetch_commits(str(local), remotes)
-    dates = filter_and_date(str(local), ['README'], shas)
+    dates = filter_and_date(str(local), ["README"], shas)
     assert len(dates) == 3
-    pytest.run(local, ['git', 'diff-index', '--quiet', 'HEAD', '--'])
+    pytest.run(local, ["git", "diff-index", "--quiet", "HEAD", "--"])

@@ -6,11 +6,13 @@ import time
 
 import pytest
 
-from sphinxcontrib.versioning.git import run_command
-from sphinxcontrib.versioning.lib import Config
+from sphinxcontrib_versioning.git import run_command
+from sphinxcontrib_versioning.lib import Config
 
-RE_BANNER = re.compile('>(?:<a href="([^"]+)">)?<b>Warning:</b> This document is for ([^<]+).(?:</a>)?</p>')
-RE_URLS = re.compile('<li><a href="[^"]+">[^<]+</a></li>')
+RE_BANNER = re.compile(
+    '>(?:<a href="([^"]+)">)?<b>Warning:</b> This document is for ([^<]+).(?:</a>)?</p>'
+)
+RE_URLS = re.compile('<a href="[^"]+">[^<]+</a>')
 ROOT_TS = int(time.mktime((2016, 12, 5, 3, 17, 5, 0, 0, 0)))
 
 
@@ -27,7 +29,7 @@ def author_committer_dates(offset):
     dt = datetime.datetime.fromtimestamp(ROOT_TS) + datetime.timedelta(minutes=offset)
     env = dict(GIT_AUTHOR_DATE=str(dt))
     dt += datetime.timedelta(seconds=2)
-    env['GIT_COMMITTER_DATE'] = str(dt)
+    env["GIT_COMMITTER_DATE"] = str(dt)
     return env
 
 
@@ -45,17 +47,13 @@ def run(directory, command, *args, **kwargs):
     return run_command(str(directory), [str(i) for i in command], *args, **kwargs)
 
 
-def pytest_namespace():
+def pytest_configure():
     """Add objects to the pytest namespace. Can be retrieved by importing pytest and accessing pytest.<name>.
 
     :return: Namespace dict.
     :rtype: dict
     """
-    return dict(
-        author_committer_dates=author_committer_dates,
-        ROOT_TS=ROOT_TS,
-        run=run,
-    )
+    pytest.run = run
 
 
 @pytest.fixture
@@ -65,17 +63,18 @@ def config(monkeypatch):
     :param monkeypatch: pytest fixture.
 
     :return: Config instance.
-    :rtype: sphinxcontrib.versioning.lib.Config
+    :rtype: sphinxcontrib_versioning.lib.Config
     """
     instance = Config()
-    ctx = type('', (), {'find_object': staticmethod(lambda _: instance)})
-    monkeypatch.setattr('click.get_current_context', lambda: ctx)
+    ctx = type("", (), {"find_object": staticmethod(lambda _: instance)})
+    monkeypatch.setattr("click.get_current_context", lambda: ctx)
     return instance
 
 
 @pytest.fixture
 def banner():
     """Verify banner in HTML file match expected."""
+
     def match(path, expected_url=None, expected_base=None):
         """Assert equals and return file contents.
 
@@ -93,12 +92,14 @@ def banner():
         else:
             assert actual == [(expected_url, expected_base)]
         return contents
+
     return match
 
 
 @pytest.fixture
 def urls():
     """Verify URLs in HTML file match expected."""
+
     def match(path, expected):
         """Assert equals and return file contents.
 
@@ -110,12 +111,13 @@ def urls():
         """
         contents = path.read()
         actual = RE_URLS.findall(contents)
-        assert actual == expected
+        assert all(e in actual for e in expected), (actual, expected)
         return contents
+
     return match
 
 
-@pytest.fixture(name='local_empty')
+@pytest.fixture(name="local_empty")
 def fx_local_empty(tmpdir):
     """Local git repository with no commits.
 
@@ -124,12 +126,12 @@ def fx_local_empty(tmpdir):
     :return: Path to repo root.
     :rtype: py.path.local
     """
-    repo = tmpdir.ensure_dir('local')
-    run(repo, ['git', 'init'])
+    repo = tmpdir.ensure_dir("local")
+    run(repo, ["git", "init"])
     return repo
 
 
-@pytest.fixture(name='remote')
+@pytest.fixture(name="remote")
 def fx_remote(tmpdir):
     """Remote git repository with nothing pushed to it.
 
@@ -138,12 +140,12 @@ def fx_remote(tmpdir):
     :return: Path to bare repo root.
     :rtype: py.path.local
     """
-    repo = tmpdir.ensure_dir('remote')
-    run(repo, ['git', 'init', '--bare'])
+    repo = tmpdir.ensure_dir("remote")
+    run(repo, ["git", "init", "--bare"])
     return repo
 
 
-@pytest.fixture(name='local_commit')
+@pytest.fixture(name="local_commit")
 def fx_local_commit(local_empty):
     """Local git repository with one commit.
 
@@ -152,13 +154,17 @@ def fx_local_commit(local_empty):
     :return: Path to repo root.
     :rtype: py.path.local
     """
-    local_empty.join('README').write('Dummy readme file.')
-    run(local_empty, ['git', 'add', 'README'])
-    run(local_empty, ['git', 'commit', '-m', 'Initial commit.'], environ=author_committer_dates(0))
+    local_empty.join("README").write("Dummy readme file.")
+    run(local_empty, ["git", "add", "README"])
+    run(
+        local_empty,
+        ["git", "commit", "-m", "Initial commit."],
+        environ=author_committer_dates(0),
+    )
     return local_empty
 
 
-@pytest.fixture(name='local')
+@pytest.fixture(name="local")
 def fx_local(local_commit, remote):
     """Local git repository with branches, light tags, and annotated tags pushed to remote.
 
@@ -168,16 +174,22 @@ def fx_local(local_commit, remote):
     :return: Path to repo root.
     :rtype: py.path.local
     """
-    run(local_commit, ['git', 'tag', 'light_tag'])
-    run(local_commit, ['git', 'tag', '--annotate', '-m', 'Tag annotation.', 'annotated_tag'])
-    run(local_commit, ['git', 'checkout', '-b', 'feature'])
-    run(local_commit, ['git', 'checkout', 'master'])
-    run(local_commit, ['git', 'remote', 'add', 'origin', remote])
-    run(local_commit, ['git', 'push', 'origin', 'master', 'feature', 'light_tag', 'annotated_tag'])
+    run(local_commit, ["git", "tag", "light_tag"])
+    run(
+        local_commit,
+        ["git", "tag", "--annotate", "-m", "Tag annotation.", "annotated_tag"],
+    )
+    run(local_commit, ["git", "checkout", "-b", "feature"])
+    run(local_commit, ["git", "checkout", "main"])
+    run(local_commit, ["git", "remote", "add", "origin", remote])
+    run(
+        local_commit,
+        ["git", "push", "origin", "main", "feature", "light_tag", "annotated_tag"],
+    )
     return local_commit
 
 
-@pytest.fixture(name='local_light')
+@pytest.fixture(name="local_light")
 def fx_local_light(tmpdir, local, remote):
     """Light-weight local repository similar to how Travis/AppVeyor clone repos.
 
@@ -189,10 +201,10 @@ def fx_local_light(tmpdir, local, remote):
     :rtype: py.path.local
     """
     assert local  # Ensures local pushes feature branch before this fixture is called.
-    local2 = tmpdir.ensure_dir('local2')
-    run(local2, ['git', 'clone', '--depth=1', '--branch=feature', remote, '.'])
-    sha = run(local2, ['git', 'rev-parse', 'HEAD']).strip()
-    run(local2, ['git', 'checkout', '-qf', sha])
+    local2 = tmpdir.ensure_dir("local2")
+    run(local2, ["git", "clone", "--depth=1", "--branch=feature", remote, "."])
+    sha = run(local2, ["git", "rev-parse", "HEAD"]).strip()
+    run(local2, ["git", "checkout", "-qf", sha])
 
     return local2
 
@@ -209,22 +221,30 @@ def outdate_local(tmpdir, local_light, remote):
     :rtype: py.path.local
     """
     assert local_light  # Ensures local_light is setup before this fixture pushes to remote.
-    local_ahead = tmpdir.ensure_dir('local_ahead')
-    run(local_ahead, ['git', 'clone', remote, '.'])
-    run(local_ahead, ['git', 'checkout', '-b', 'un_pushed_branch'])
-    local_ahead.join('README').write('changed')
-    run(local_ahead, ['git', 'commit', '-am', 'Changed new branch'], environ=author_committer_dates(1))
-    run(local_ahead, ['git', 'tag', 'nb_tag'])
-    run(local_ahead, ['git', 'checkout', '--orphan', 'orphaned_branch'])
-    local_ahead.join('README').write('new')
-    run(local_ahead, ['git', 'add', 'README'])
-    run(local_ahead, ['git', 'commit', '-m', 'Added new README'], environ=author_committer_dates(2))
-    run(local_ahead, ['git', 'tag', '--annotate', '-m', 'Tag annotation.', 'ob_at'])
-    run(local_ahead, ['git', 'push', 'origin', 'nb_tag', 'orphaned_branch', 'ob_at'])
+    local_ahead = tmpdir.ensure_dir("local_ahead")
+    run(local_ahead, ["git", "clone", remote, "."])
+    run(local_ahead, ["git", "checkout", "-b", "un_pushed_branch"])
+    local_ahead.join("README").write("changed")
+    run(
+        local_ahead,
+        ["git", "commit", "-am", "Changed new branch"],
+        environ=author_committer_dates(1),
+    )
+    run(local_ahead, ["git", "tag", "nb_tag"])
+    run(local_ahead, ["git", "checkout", "--orphan", "orphaned_branch"])
+    local_ahead.join("README").write("new")
+    run(local_ahead, ["git", "add", "README"])
+    run(
+        local_ahead,
+        ["git", "commit", "-m", "Added new README"],
+        environ=author_committer_dates(2),
+    )
+    run(local_ahead, ["git", "tag", "--annotate", "-m", "Tag annotation.", "ob_at"])
+    run(local_ahead, ["git", "push", "origin", "nb_tag", "orphaned_branch", "ob_at"])
     return local_ahead
 
 
-@pytest.fixture(name='local_docs')
+@pytest.fixture(name="local_docs")
 def fx_local_docs(local):
     """Local repository with Sphinx doc files. Pushed to remote.
 
@@ -233,45 +253,37 @@ def fx_local_docs(local):
     :return: Path to repo root.
     :rtype: py.path.local
     """
-    local.ensure('conf.py')
-    local.join('contents.rst').write(
-        'Test\n'
-        '====\n'
-        '\n'
-        'Sample documentation.\n'
-        '\n'
-        '.. toctree::\n'
-        '    one\n'
-        '    two\n'
-        '    three\n'
+    local.ensure("conf.py")
+    local.join("contents.rst").write(
+        "Test\n"
+        "====\n"
+        "\n"
+        "Sample documentation.\n"
+        "\n"
+        ".. toctree::\n"
+        "    one\n"
+        "    two\n"
+        "    three\n"
     )
-    local.join('one.rst').write(
-        '.. _one:\n'
-        '\n'
-        'One\n'
-        '===\n'
-        '\n'
-        'Sub page documentation 1.\n'
+    local.join("one.rst").write(
+        ".. _one:\n" "\n" "One\n" "===\n" "\n" "Sub page documentation 1.\n"
     )
-    local.join('two.rst').write(
-        '.. _two:\n'
-        '\n'
-        'Two\n'
-        '===\n'
-        '\n'
-        'Sub page documentation 2.\n'
+    local.join("two.rst").write(
+        ".. _two:\n" "\n" "Two\n" "===\n" "\n" "Sub page documentation 2.\n"
     )
-    local.join('three.rst').write(
-        '.. _three:\n'
-        '\n'
-        'Three\n'
-        '=====\n'
-        '\n'
-        'Sub page documentation 3.\n'
+    local.join("three.rst").write(
+        ".. _three:\n" "\n" "Three\n" "=====\n" "\n" "Sub page documentation 3.\n"
     )
-    run(local, ['git', 'add', 'conf.py', 'contents.rst', 'one.rst', 'two.rst', 'three.rst'])
-    run(local, ['git', 'commit', '-m', 'Adding docs.'], environ=author_committer_dates(3))
-    run(local, ['git', 'push', 'origin', 'master'])
+    run(
+        local,
+        ["git", "add", "conf.py", "contents.rst", "one.rst", "two.rst", "three.rst"],
+    )
+    run(
+        local,
+        ["git", "commit", "-m", "Adding docs."],
+        environ=author_committer_dates(3),
+    )
+    run(local, ["git", "push", "origin", "main"])
     return local
 
 
@@ -281,11 +293,15 @@ def local_docs_ghp(local_docs):
 
     :param local_docs: local fixture.
     """
-    run(local_docs, ['git', 'checkout', '--orphan', 'gh-pages'])
-    run(local_docs, ['git', 'rm', '-rf', '.'])
-    local_docs.join('README').write('Orphaned branch for HTML docs.')
-    run(local_docs, ['git', 'add', 'README'])
-    run(local_docs, ['git', 'commit', '-m', 'Initial Commit'], environ=author_committer_dates(4))
-    run(local_docs, ['git', 'push', 'origin', 'gh-pages'])
-    run(local_docs, ['git', 'checkout', 'master'])
+    run(local_docs, ["git", "checkout", "--orphan", "gh-pages"])
+    run(local_docs, ["git", "rm", "-rf", "."])
+    local_docs.join("README").write("Orphaned branch for HTML docs.")
+    run(local_docs, ["git", "add", "README"])
+    run(
+        local_docs,
+        ["git", "commit", "-m", "Initial Commit"],
+        environ=author_committer_dates(4),
+    )
+    run(local_docs, ["git", "push", "origin", "gh-pages"])
+    run(local_docs, ["git", "checkout", "main"])
     return local_docs

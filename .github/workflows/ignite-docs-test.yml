@@ -1,0 +1,59 @@
+name: Run integration test and build pytorch-ignite docs
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # <workflow_name>-<branch_name>-<true || commit_sha (if branch is protected)>
+  group: integration-test-${{ github.ref_name }}-${{ !(github.ref_protected) || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      max-parallel: 10
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.10", ]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Get year & week number
+        id: get-date
+        run: |
+          echo "date=$(/bin/date "+%Y-%U")" >> $GITHUB_OUTPUT
+
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          pip install -U pip || python -m pip install -U pip
+          echo "pip_cache=$(pip cache dir)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ${{ steps.pip-cache.outputs.pip_cache }}
+          key: ${{ steps.get-date.outputs.date }}-pytorch-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.pytorch-channel }}-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ steps.get-date.outputs.date }}-pytorch-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.pytorch-channel }}-
+
+      - name: Install package
+        run: |
+          python setup.py install
+
+      - name: Run Integration test
+        run: |
+          git clone https://github.com/pytorch/ignite.git /tmp/ignite
+          cd /tmp/ignite/
+          # Source: https://github.com/pytorch/ignite/blob/9324dab8b6299269b8dd3dbecee49a0e6ffbab70/.github/workflows/docs.yml
+          bash .github/workflows/install_docs_deps.sh
+          bash .github/workflows/build_docs.sh

@@ -1,6 +1,5 @@
 name: Run integration test and build pytorch-ignite docs
 on:
-  push:
   pull_request:
   workflow_dispatch:
 

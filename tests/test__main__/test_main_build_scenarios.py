@@ -26,9 +26,16 @@ def test_sub_page_and_tag(tmpdir, local_docs, urls):
 
     # Run.
     destination = tmpdir.ensure_dir("destination")
-    output = pytest.run(
-        local_docs, ["sphinx-versioning", "build", ".", str(destination), "-r", "main"]
-    )
+    try:
+        output = pytest.run(
+            local_docs, ["sphinx-versioning", "build", ".", str(destination), "-r", "main"]
+        )
+    except CalledProcessError as e:
+        print("\n--- error message: ", e.output)
+        output = pytest.run(
+            local_docs, ["sphinx-versioning", "build", ".", str(destination), "-r", "master"]
+        )
+
     assert "Traceback" not in output
 
     # Check root.

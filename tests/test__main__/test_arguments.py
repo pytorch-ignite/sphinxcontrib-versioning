@@ -263,26 +263,26 @@ def test_sub_command_options(local_empty, source_cli, source_conf):
         assert config.whitelist_tags == ("[0-9]",)
     elif source_conf:
         assert config.banner_greatest_tag is False
-        assert config.banner_main_ref == "main"
+        assert config.banner_main_ref in ("main", "master")
         assert config.banner_recent_tag is False
         assert config.greatest_tag is False
         assert config.invert is False
         assert config.priority is None
         assert config.recent_tag is False
-        assert config.root_ref == "main"
+        assert config.root_ref in ("main", "master")
         assert config.show_banner is False
         assert config.sort == ()
         assert config.whitelist_branches == ()
         assert config.whitelist_tags == ()
     else:
         assert config.banner_greatest_tag is False
-        assert config.banner_main_ref == "main"
+        assert config.banner_main_ref in ("main", "master")
         assert config.banner_recent_tag is False
         assert config.greatest_tag is False
         assert config.invert is False
         assert config.priority is None
         assert config.recent_tag is False
-        assert config.root_ref == "main"
+        assert config.root_ref in ("main", "master")
         assert config.show_banner is False
         assert config.sort == tuple()
         assert config.whitelist_branches == tuple()

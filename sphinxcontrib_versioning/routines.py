@@ -96,9 +96,10 @@ def gather_git_info(root, conf_rel_paths, whitelist_branches, whitelist_tags):
         raise HandledError
     filtered_remotes = [
         [
-            i[0],
-            i[1],
-            i[2],
+            i[0],  # sha
+            i[1],  # name
+            i[2],  # kind
+            i[3],  # sha 8
         ]
         + dates_paths[i[0]]
         for i in remotes
@@ -188,7 +189,8 @@ def pre_build(local_root, versions, use_master_conf=False, use_master_templates=
         source = os.path.dirname(
             os.path.join(exported_root, remote["sha"], remote["conf_rel_path"])
         )
-        os.environ["code_version"] = remote["name"]
+        code_version = f"master ({remote['sha8']})" if remote["name"] == "master" else remote["name"]
+        os.environ["code_version"] = code_version
         build(source, temp_dir, versions, remote["name"], True)
         os.environ.pop("code_version")
         existing = os.listdir(temp_dir)
@@ -239,7 +241,8 @@ def build_all(exported_root, destination, versions):
         source = os.path.dirname(
             os.path.join(exported_root, remote["sha"], remote["conf_rel_path"])
         )
-        os.environ["code_version"] = remote["name"]
+        code_version = f"master ({remote['sha8']})" if remote["name"] == "master" else remote["name"]
+        os.environ["code_version"] = code_version
         build(source, destination, versions, remote["name"], True)
         os.environ.pop("code_version")
 
@@ -251,7 +254,8 @@ def build_all(exported_root, destination, versions):
             )
             target = os.path.join(destination, remote["root_dir"])
             try:
-                os.environ["code_version"] = remote["name"]
+                code_version = f"master ({remote['sha8']})" if remote["name"] == "master" else remote["name"]
+                os.environ["code_version"] = code_version
                 build(source, target, versions, remote["name"], False)
                 os.environ.pop("code_version")
             except HandledError:

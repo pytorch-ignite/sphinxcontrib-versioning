@@ -233,7 +233,7 @@ def list_remote(local_root):
     else:
         parsed = [m.groupdict() for m in RE_REMOTE.finditer(output)]
 
-    return [[i["sha"], i["name"], i["kind"]] for i in parsed]
+    return [[i["sha"], i["name"], i["kind"], i["sha"][:8]] for i in parsed]
 
 
 def filter_and_date(local_root, conf_rel_paths, commits):

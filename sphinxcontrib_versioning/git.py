@@ -289,7 +289,7 @@ def fetch_commits(local_root, remotes):
     run_command(local_root, command)
 
     # Fetch new branches/tags.
-    for sha, name, kind in remotes:
+    for sha, name, kind, sha8 in remotes:
         try:
             run_command(local_root, ["git", "reflog", sha])
         except CalledProcessError:

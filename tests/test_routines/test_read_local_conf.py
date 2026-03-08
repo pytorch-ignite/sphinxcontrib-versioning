@@ -31,8 +31,7 @@ def test_empty(tmpdir, caplog, error):
             "Unable to read file, continuing with only CLI args.",
         )
     else:
-        assert records[0][0] == "INFO"
-        assert any(r[0] == "DEBUG" for r in records)
+        assert [r[0] for r in records] == ["INFO", "DEBUG"]
     assert config == dict()
 
 

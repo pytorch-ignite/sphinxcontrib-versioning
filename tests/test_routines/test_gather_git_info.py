@@ -23,7 +23,7 @@ def test_working(local):
         ["annotated_tag", "tags"],
         ["light_tag", "tags"],
     ]
-    assert [i[1:-3] for i in filtered_remotes] == expected
+    assert [i[1:-2] for i in filtered_remotes] == expected
 
 
 @pytest.mark.parametrize("wlb", [False, True])
@@ -54,7 +54,7 @@ def test_whitelisting(local, wlb, wlt):
     filtered_remotes = gather_git_info(
         str(local), [os.path.join(".", "README")], whitelist_branches, whitelist_tags
     )
-    assert [i[1:-3] for i in filtered_remotes] == expected
+    assert [i[1:-2] for i in filtered_remotes] == expected
 
 
 @pytest.mark.usefixtures("outdate_local")
@@ -84,7 +84,7 @@ def test_fetch(monkeypatch, caplog, local, skip_fetch):
             ["nb_tag", "tags"],
             ["ob_at", "tags"],
         ]
-        assert [i[1:-3] for i in filtered_remotes] == expected
+        assert [i[1:-2] for i in filtered_remotes] == expected
 
     records = [(r.levelname, r.message) for r in caplog.records]
     assert ("INFO", "Need to fetch from remote...") in records

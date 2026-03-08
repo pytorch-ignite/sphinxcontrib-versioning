@@ -23,11 +23,9 @@ RE_INVALID_FILENAME = re.compile(r"[^0-9A-Za-z.-]")
 def read_local_conf(local_conf):
     """Search for conf.py in any rel_source directory in CWD and if found read it and return.
 
-    Only settings that differ from their defaults are returned.
-
     :param str local_conf: Path to conf.py to read.
 
-    :return: Loaded conf.py settings that differ from defaults.
+    :return: Loaded conf.py.
     :rtype: dict
     """
     log = logging.getLogger(__name__)
@@ -40,23 +38,12 @@ def read_local_conf(local_conf):
         log.warning("Unable to read file, continuing with only CLI args.")
         return dict()
 
-    # Filter to only return scv_* settings that differ from their defaults.
-    default_config = Config()
-    result = {}
-    for k, v in config.items():
-        if not k.startswith("scv_") or k[4:].startswith("_"):
-            continue
-        key = k[4:]
-        default_val = getattr(default_config, key, None)
-        try:
-            differs = v != default_val
-        except Exception:
-            differs = v is not default_val
-        if differs:
-            result[key] = v
-
-    log.debug("Read settings from conf.py: %s", result)
-    return result
+    # Filter and return.
+    return {
+        k[4:]: v
+        for k, v in config.items()
+        if k.startswith("scv_") and not k[4:].startswith("_")
+    }
 
 
 def gather_git_info(root, conf_rel_paths, whitelist_branches, whitelist_tags):
@@ -161,11 +148,9 @@ def pre_build(local_root, versions, use_master_conf=False, use_master_templates=
         log.debug("Exporting %s to temporary directory.", sha)
         export(local_root, sha, target)
 
-    root_ref = Config.from_context().root_ref
-
     # Copy conf.py from local master to all branches and tags
     if use_master_conf:
-        master_remote = [r for r in list(versions.remotes) if r["name"] == root_ref]
+        master_remote = [r for r in list(versions.remotes) if r["name"] == "master"]
         assert len(master_remote) == 1
         master_remote = master_remote[0]
         master_conf_file = master_remote["conf_rel_path"]
@@ -178,7 +163,7 @@ def pre_build(local_root, versions, use_master_conf=False, use_master_templates=
             shutil.copy(master_conf_file, filename)
 
     if use_master_templates:
-        master_remote = [r for r in list(versions.remotes) if r["name"] == root_ref]
+        master_remote = [r for r in list(versions.remotes) if r["name"] == "master"]
         assert len(master_remote) == 1
         master_remote = master_remote[0]
         rel_path = os.path.dirname(master_remote["conf_rel_path"])
@@ -195,7 +180,7 @@ def pre_build(local_root, versions, use_master_conf=False, use_master_templates=
                 shutil.copytree(master_templates, dst_path)
 
     # Build root.
-    remote = versions[root_ref]
+    remote = versions[Config.from_context().root_ref]
     with TempDir() as temp_dir:
         log.debug(
             "Building root (before setting root_dirs) in temporary directory: %s",
@@ -204,7 +189,7 @@ def pre_build(local_root, versions, use_master_conf=False, use_master_templates=
         source = os.path.dirname(
             os.path.join(exported_root, remote["sha"], remote["conf_rel_path"])
         )
-        code_version = f"{root_ref} ({remote['sha8']})" if remote["name"] == root_ref else remote["name"]
+        code_version = f"master ({remote['sha8']})" if remote["name"] == "master" else remote["name"]
         os.environ["code_version"] = code_version
         build(source, temp_dir, versions, remote["name"], True)
         os.environ.pop("code_version")
@@ -249,16 +234,14 @@ def build_all(exported_root, destination, versions):
     """
     log = logging.getLogger(__name__)
 
-    root_ref = Config.from_context().root_ref
-
     while True:
         # Build root.
-        remote = versions[root_ref]
+        remote = versions[Config.from_context().root_ref]
         log.info("Building root: %s", remote["name"])
         source = os.path.dirname(
             os.path.join(exported_root, remote["sha"], remote["conf_rel_path"])
         )
-        code_version = f"{root_ref} ({remote['sha8']})" if remote["name"] == root_ref else remote["name"]
+        code_version = f"master ({remote['sha8']})" if remote["name"] == "master" else remote["name"]
         os.environ["code_version"] = code_version
         build(source, destination, versions, remote["name"], True)
         os.environ.pop("code_version")
@@ -271,7 +254,7 @@ def build_all(exported_root, destination, versions):
             )
             target = os.path.join(destination, remote["root_dir"])
             try:
-                code_version = f"{root_ref} ({remote['sha8']})" if remote["name"] == root_ref else remote["name"]
+                code_version = f"master ({remote['sha8']})" if remote["name"] == "master" else remote["name"]
                 os.environ["code_version"] = code_version
                 build(source, target, versions, remote["name"], False)
                 os.environ.pop("code_version")

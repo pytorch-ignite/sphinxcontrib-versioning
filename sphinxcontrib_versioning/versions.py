@@ -116,9 +116,9 @@ class Versions(object):
                 sha=r[0],  # str
                 name=r[1],  # str
                 kind=r[2],  # str
-                sha8=r[3] if len(r) > 5 else r[0][:8],  # str
-                date=r[4] if len(r) > 5 else r[3],  # int
-                conf_rel_path=r[5] if len(r) > 5 else r[4],  # str
+                sha8=r[3],  # str
+                date=r[4],  # int
+                conf_rel_path=r[5],  # str
                 found_docs=tuple(),  # tuple of str
                 master_doc="contents",  # str
                 root_dir=r[1],  # str

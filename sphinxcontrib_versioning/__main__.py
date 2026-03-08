@@ -248,7 +248,7 @@ def build_options(func):
     func = click.option(
         "-B",
         "--banner-main-ref",
-        help="Don't show banner on this ref and point banner URLs to this ref. Default main.",
+        help="Don't show banner on this ref and point banner URLs to this ref. Default master.",
     )(func)
     func = click.option(
         "-i", "--invert", help="Invert/reverse order of versions.", is_flag=True
@@ -262,7 +262,7 @@ def build_options(func):
     func = click.option(
         "-r",
         "--root-ref",
-        help="The branch/tag at the root of DESTINATION. Will also be in subdir. Default main.",
+        help="The branch/tag at the root of DESTINATION. Will also be in subdir. Default master.",
     )(func)
     func = click.option(
         "-s",

@@ -27,7 +27,7 @@ def test(config, local_docs, mode):
 
     config = read_config(str(local_docs), "main")
     if mode == "default":
-        assert config["master_doc"] == "contents"
+        assert config["master_doc"] == "index"
     else:
         assert config["master_doc"] == expected
     assert sorted(config["found_docs"]) == [expected, "one", "three", "two"]

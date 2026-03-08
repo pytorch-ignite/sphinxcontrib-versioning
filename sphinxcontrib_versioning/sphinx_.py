@@ -80,14 +80,8 @@ class EventHandlers(object):
                 for n in (a for a in dir(app.config) if a.startswith("scv_"))
             }
             config["found_docs"] = tuple(str(d) for d in env.found_docs)
-            # Sphinx 4+ renamed master_doc to root_doc; support both.
-            master_doc = getattr(app.config, "root_doc", None) or getattr(
-                app.config, "master_doc", "index"
-            )
-            config["master_doc"] = str(master_doc)
+            config["master_doc"] = str(app.config.master_doc)
             cls.ABORT_AFTER_READ.put(config)
-            cls.ABORT_AFTER_READ.close()
-            cls.ABORT_AFTER_READ.join_thread()
             sys.exit(0)
 
     @classmethod
@@ -157,7 +151,7 @@ class EventHandlers(object):
                 )
                 mtime = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
                 context["last_updated"] = format_date(
-                    lufmt, date=mtime, language=app.config.language
+                    lufmt, mtime, language=app.config.language
                 )
 
 
@@ -196,22 +190,6 @@ class ConfigInject(SphinxConfig):
         """Constructor."""
         super(ConfigInject, self).__init__(*args)
         self.extensions.append("sphinxcontrib_versioning.sphinx_")
-
-    @classmethod
-    def read(cls, confdir, *, overrides, tags):
-        """Override to ensure ConfigInject is used when conf.py exists.
-
-        In Sphinx >=7, Config.read() calls _read_conf_py() which hardcodes Config()
-        instead of cls(), so subclassing alone is not sufficient.
-        """
-        import sphinx.config as _sphinx_config
-
-        _orig = _sphinx_config.Config
-        _sphinx_config.Config = cls
-        try:
-            return super().read(confdir, overrides=overrides, tags=tags)
-        finally:
-            _sphinx_config.Config = _orig
 
 
 def _build(argv, config, versions, current_name, is_root):

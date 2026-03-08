@@ -50,11 +50,11 @@ def test_single(tmpdir, local_docs, urls):
     # Verify HTML links.
     urls(
         destination.join("contents.html"),
-        ['<a href="main/contents.html">main</a>'],
+        ['<li><a href="main/contents.html">main</a></li>'],
     )
     urls(
         destination.join("main", "contents.html"),
-        ['<a href="contents.html">main</a>'],
+        ['<li><a href="contents.html">main</a></li>'],
     )
 
 
@@ -119,29 +119,29 @@ def test_multiple(tmpdir, config, local_docs, urls, triple, parallel):
 
     # Verify root HTML links.
     expected = [
-        '<a href="main/contents.html">main</a>',
-        '<a href="v1.0.0/contents.html">v1.0.0</a>',
+        '<li><a href="main/contents.html">main</a></li>',
+        '<li><a href="v1.0.0/contents.html">v1.0.0</a></li>',
     ]
     if triple:
-        expected.append('<a href="v1.0.1/contents.html">v1.0.1</a>')
+        expected.append('<li><a href="v1.0.1/contents.html">v1.0.1</a></li>')
     urls(destination.join("contents.html"), expected)
 
     # Verify main links.
     expected = [
-        '<a href="contents.html">main</a>',
-        '<a href="../v1.0.0/contents.html">v1.0.0</a>',
+        '<li><a href="contents.html">main</a></li>',
+        '<li><a href="../v1.0.0/contents.html">v1.0.0</a></li>',
     ]
     if triple:
-        expected.append('<a href="../v1.0.1/contents.html">v1.0.1</a>')
+        expected.append('<li><a href="../v1.0.1/contents.html">v1.0.1</a></li>')
     urls(destination.join("main", "contents.html"), expected)
 
     # Verify v1.0.0 links.
     expected = [
-        '<a href="../main/contents.html">main</a>',
-        '<a href="contents.html">v1.0.0</a>',
+        '<li><a href="../main/contents.html">main</a></li>',
+        '<li><a href="contents.html">v1.0.0</a></li>',
     ]
     if triple:
-        expected.append('<a href="../v1.0.1/contents.html">v1.0.1</a>')
+        expected.append('<li><a href="../v1.0.1/contents.html">v1.0.1</a></li>')
     urls(destination.join("v1.0.0", "contents.html"), expected)
     if not triple:
         return
@@ -150,9 +150,9 @@ def test_multiple(tmpdir, config, local_docs, urls, triple, parallel):
     urls(
         destination.join("v1.0.1", "contents.html"),
         [
-            '<a href="../main/contents.html">main</a>',
-            '<a href="../v1.0.0/contents.html">v1.0.0</a>',
-            '<a href="contents.html">v1.0.1</a>',
+            '<li><a href="../main/contents.html">main</a></li>',
+            '<li><a href="../v1.0.0/contents.html">v1.0.0</a></li>',
+            '<li><a href="contents.html">v1.0.1</a></li>',
         ],
     )
 
@@ -374,7 +374,9 @@ def test_last_updated(tmpdir, local_docs):
     :param tmpdir: pytest fixture.
     :param local_docs: conftest fixture.
     """
-    local_docs.join("conf.py").write('html_last_updated_fmt = "%c"\nmaster_doc = "contents"\nhtml_theme = "basic"\n')
+    local_docs.join("conf.py").write(
+        'html_last_updated_fmt = "%c"\n' 'html_theme="sphinx_rtd_theme"\n'
+    )
     local_docs.join("two.rst").write("Changed\n", mode="a")
     pytest.run(
         local_docs,
@@ -409,22 +411,18 @@ def test_last_updated(tmpdir, local_docs):
     destination = tmpdir.ensure_dir("destination")
     build_all(str(exported_root), str(destination), versions)
 
-    # Python 3.12 uses narrow no-break space (U+202F) between time and AM/PM
-    def normalize_time(s):
-        return s.replace("\u202f", " ")
-
     # Verify main.
-    one = [normalize_time(s) for s in RE_LAST_UPDATED.findall(destination.join("main", "one.html").read())]
-    two = [normalize_time(s) for s in RE_LAST_UPDATED.findall(destination.join("main", "two.html").read())]
-    three = [normalize_time(s) for s in RE_LAST_UPDATED.findall(destination.join("main", "three.html").read())]
+    one = RE_LAST_UPDATED.findall(destination.join("main", "one.html").read())
+    two = RE_LAST_UPDATED.findall(destination.join("main", "two.html").read())
+    three = RE_LAST_UPDATED.findall(destination.join("main", "three.html").read())
     assert one == ["Last updated on Dec 5, 2016, 3:20:05 AM.\n"]
     assert two == ["Last updated on Dec 5, 2016, 3:27:05 AM.\n"]
     assert three == ["Last updated on Dec 5, 2016, 3:20:05 AM.\n"]
 
     # Verify other.
-    one = [normalize_time(s) for s in RE_LAST_UPDATED.findall(destination.join("other", "one.html").read())]
-    two = [normalize_time(s) for s in RE_LAST_UPDATED.findall(destination.join("other", "two.html").read())]
-    three = [normalize_time(s) for s in RE_LAST_UPDATED.findall(destination.join("other", "three.html").read())]
+    one = RE_LAST_UPDATED.findall(destination.join("other", "one.html").read())
+    two = RE_LAST_UPDATED.findall(destination.join("other", "two.html").read())
+    three = RE_LAST_UPDATED.findall(destination.join("other", "three.html").read())
     assert one == ["Last updated on Dec 5, 2016, 3:20:05 AM.\n"]
     assert two == ["Last updated on Dec 5, 2016, 3:27:05 AM.\n"]
     assert three == ["Last updated on Dec 5, 2016, 3:28:05 AM.\n"]
@@ -481,9 +479,9 @@ def test_error(tmpdir, config, local_docs, urls, parallel):
     urls(
         destination.join("contents.html"),
         [
-            '<a href="a_good/contents.html">a_good</a>',
-            '<a href="c_good/contents.html">c_good</a>',
-            '<a href="main/contents.html">main</a>',
+            '<li><a href="a_good/contents.html">a_good</a></li>',
+            '<li><a href="c_good/contents.html">c_good</a></li>',
+            '<li><a href="main/contents.html">main</a></li>',
         ],
     )
 
@@ -491,9 +489,9 @@ def test_error(tmpdir, config, local_docs, urls, parallel):
     urls(
         destination.join("a_good", "contents.html"),
         [
-            '<a href="contents.html">a_good</a>',
-            '<a href="../c_good/contents.html">c_good</a>',
-            '<a href="../main/contents.html">main</a>',
+            '<li><a href="contents.html">a_good</a></li>',
+            '<li><a href="../c_good/contents.html">c_good</a></li>',
+            '<li><a href="../main/contents.html">main</a></li>',
         ],
     )
 
@@ -501,9 +499,9 @@ def test_error(tmpdir, config, local_docs, urls, parallel):
     urls(
         destination.join("c_good", "contents.html"),
         [
-            '<a href="../a_good/contents.html">a_good</a>',
-            '<a href="contents.html">c_good</a>',
-            '<a href="../main/contents.html">main</a>',
+            '<li><a href="../a_good/contents.html">a_good</a></li>',
+            '<li><a href="contents.html">c_good</a></li>',
+            '<li><a href="../main/contents.html">main</a></li>',
         ],
     )
 
@@ -511,9 +509,9 @@ def test_error(tmpdir, config, local_docs, urls, parallel):
     urls(
         destination.join("main", "contents.html"),
         [
-            '<a href="../a_good/contents.html">a_good</a>',
-            '<a href="../c_good/contents.html">c_good</a>',
-            '<a href="contents.html">main</a>',
+            '<li><a href="../a_good/contents.html">a_good</a></li>',
+            '<li><a href="../c_good/contents.html">c_good</a></li>',
+            '<li><a href="contents.html">main</a></li>',
         ],
     )
 
@@ -553,9 +551,9 @@ def test_all_errors(tmpdir, local_docs, urls):
     # Verify root HTML links.
     urls(
         destination.join("contents.html"),
-        ['<a href="main/contents.html">main</a>'],
+        ['<li><a href="main/contents.html">main</a></li>'],
     )
     urls(
         destination.join("main", "contents.html"),
-        ['<a href="contents.html">main</a>'],
+        ['<li><a href="contents.html">main</a></li>'],
     )

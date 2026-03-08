@@ -32,13 +32,13 @@ class Config(object):
         self.show_banner = False
 
         # Strings.
-        self.banner_main_ref = "main"
+        self.banner_main_ref = "master"
         self.chdir = None
         self.git_root = None
         self.local_conf = None
         self.priority = None
         self.push_remote = "origin"
-        self.root_ref = "main"
+        self.root_ref = "master"
 
         # Tuples.
         self.grm_exclude = tuple()

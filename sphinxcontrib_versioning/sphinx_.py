@@ -151,7 +151,7 @@ class EventHandlers(object):
                 )
                 mtime = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
                 context["last_updated"] = format_date(
-                    lufmt, mtime, language=app.config.language
+                    format=lufmt, date=mtime, language=app.config.language
                 )
 
 

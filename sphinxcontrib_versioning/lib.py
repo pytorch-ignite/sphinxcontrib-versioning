@@ -26,19 +26,19 @@ class Config(object):
         self.invert = False
         self.no_colors = False
         self.no_local_conf = False
-        self.use_master_conf = False
-        self.use_master_templates = False
+        self.use_main_conf = False
+        self.use_main_templates = False
         self.recent_tag = False
         self.show_banner = False
 
         # Strings.
-        self.banner_main_ref = "master"
+        self.banner_main_ref = "main"
         self.chdir = None
         self.git_root = None
         self.local_conf = None
         self.priority = None
         self.push_remote = "origin"
-        self.root_ref = "master"
+        self.root_ref = "main"
 
         # Tuples.
         self.grm_exclude = tuple()

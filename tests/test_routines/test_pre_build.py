@@ -21,12 +21,12 @@ def test_single(local_docs):
     # Run and verify directory.
     exported_root = py.path.local(pre_build(str(local_docs), versions))
     assert len(exported_root.listdir()) == 1
-    assert exported_root.join(versions["main"]["sha"], "conf.py").read() == ""
+    assert exported_root.join(versions["main"]["sha"], "conf.py").read() == 'project = "Python"\nmaster_doc = "contents"\n'
 
-    # Verify root_dir and main_doc..
+    # Verify root_dir and master_doc.
     expected = ["main/contents"]
     assert (
-        sorted(posixpath.join(r["root_dir"], r["main_doc"]) for r in versions.remotes)
+        sorted(posixpath.join(r["root_dir"], r["master_doc"]) for r in versions.remotes)
         == expected
     )
 
@@ -49,16 +49,16 @@ def test_dual(local_docs):
     # Run and verify directory.
     exported_root = py.path.local(pre_build(str(local_docs), versions))
     assert len(exported_root.listdir()) == 2
-    assert exported_root.join(versions["main"]["sha"], "conf.py").read() == ""
+    assert exported_root.join(versions["main"]["sha"], "conf.py").read() == 'project = "Python"\nmaster_doc = "contents"\n'
     assert (
         exported_root.join(versions["feature"]["sha"], "conf.py").read()
         == 'main_doc = "index"\n'
     )
 
-    # Verify versions root_dirs and main_docs.
+    # Verify versions root_dirs and master_docs.
     expected = ["feature/index", "main/contents"]
     assert (
-        sorted(posixpath.join(r["root_dir"], r["main_doc"]) for r in versions.remotes)
+        sorted(posixpath.join(r["root_dir"], r["master_doc"]) for r in versions.remotes)
         == expected
     )
 
@@ -78,7 +78,7 @@ def test_file_collision(local_docs):
     pre_build(str(local_docs), versions)
     expected = ["_static_/contents", "main/contents"]
     assert (
-        sorted(posixpath.join(r["root_dir"], r["main_doc"]) for r in versions.remotes)
+        sorted(posixpath.join(r["root_dir"], r["master_doc"]) for r in versions.remotes)
         == expected
     )
 
@@ -98,7 +98,7 @@ def test_invalid_name(local_docs):
     pre_build(str(local_docs), versions)
     expected = ["main/contents", "robpol86_feature/contents"]
     assert (
-        sorted(posixpath.join(r["root_dir"], r["main_doc"]) for r in versions.remotes)
+        sorted(posixpath.join(r["root_dir"], r["master_doc"]) for r in versions.remotes)
         == expected
     )
 

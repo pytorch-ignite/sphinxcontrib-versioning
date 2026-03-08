@@ -54,6 +54,7 @@ def pytest_configure():
     :rtype: dict
     """
     pytest.run = run
+    pytest.author_committer_dates = author_committer_dates
 
 
 @pytest.fixture
@@ -253,7 +254,7 @@ def fx_local_docs(local):
     :return: Path to repo root.
     :rtype: py.path.local
     """
-    local.ensure("conf.py")
+    local.join("conf.py").write('project = "Python"\nmaster_doc = "contents"\n')
     local.join("contents.rst").write(
         "Test\n"
         "====\n"

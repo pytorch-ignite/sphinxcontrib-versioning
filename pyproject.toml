@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sphinxcontrib-versioning"
+dynamic = ["version"]
+description = "Sphinx extension that allows building versioned docs for PyTorch-Ignite"
+readme = "README.rst"
+license = { text = "MIT" }
+authors = [{ name = "PyTorch-Ignite Team", email = "contact@pytorch-ignite.ai" }]
+keywords = ["sphinx", "versioning", "versions", "version", "branches", "tags"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Framework :: Sphinx :: Extension",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Topic :: Documentation :: Sphinx",
+    "Topic :: Software Development :: Documentation",
+]
+requires-python = ">=3.10"
+dependencies = ["click", "colorclass", "sphinx>=5,<6"]
+
+[project.urls]
+Homepage = "https://github.com/pytorch-ignite/sphinxcontrib-versioning/"
+
+[project.scripts]
+sphinx-versioning = "sphinxcontrib_versioning.__main__:cli"
+
+[tool.setuptools.dynamic]
+version = { attr = "sphinxcontrib_versioning.__version__" }
+
+[tool.setuptools.packages.find]
+exclude = ["tests", "tests.*"]
+
+[tool.setuptools.package-data]
+"*" = [
+    "_static/banner.css",
+    "_templates/banner.html",
+    "_templates/layout.html",
+    "_templates/versions.html",
+]
+
+[tool.pytest.ini_options]
+log_level = "DEBUG"

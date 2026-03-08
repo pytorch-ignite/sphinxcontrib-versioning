@@ -1,5 +1,6 @@
 """Test mixing sources of arguments/settings."""
 
+import re
 from os.path import join
 
 import pytest
@@ -48,8 +49,7 @@ def test_overflow(local_empty, source_cli, source_conf):
     if source_cli:
         assert config.overflow == ("-D", "setting=value")
     elif source_conf:
-        # assert config.overflow == ("-D", "key=value")
-        assert config.overflow == tuple()
+        assert config.overflow == ("-D", "key=value")
     else:
         assert config.overflow == tuple()
 
@@ -262,18 +262,18 @@ def test_sub_command_options(local_empty, source_cli, source_conf):
         assert config.whitelist_branches == ("main",)
         assert config.whitelist_tags == ("[0-9]",)
     elif source_conf:
-        assert config.banner_greatest_tag is False
-        assert config.banner_main_ref in ("main", "master")
-        assert config.banner_recent_tag is False
-        assert config.greatest_tag is False
-        assert config.invert is False
-        assert config.priority is None
-        assert config.recent_tag is False
-        assert config.root_ref in ("main", "master")
-        assert config.show_banner is False
-        assert config.sort == ()
-        assert config.whitelist_branches == ()
-        assert config.whitelist_tags == ()
+        assert config.banner_greatest_tag is True
+        assert config.banner_main_ref == "y"
+        assert config.banner_recent_tag is True
+        assert config.greatest_tag is True
+        assert config.invert is True
+        assert config.priority == "tags"
+        assert config.recent_tag is True
+        assert config.root_ref == "other"
+        assert config.show_banner is True
+        assert config.sort == ("alpha",)
+        assert config.whitelist_branches == ("other",)
+        assert config.whitelist_tags == re.compile("^[0-9]$")
     else:
         assert config.banner_greatest_tag is False
         assert config.banner_main_ref in ("main", "master")

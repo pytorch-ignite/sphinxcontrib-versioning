@@ -141,12 +141,12 @@ class ClickCommand(click.Command):
     is_flag=True,
 )
 @click.option(
-    "-mc", "--use-main-conf", help="Use conf.py file from main branch", is_flag=True
+    "-mc", "--use-master-conf", help="Use conf.py file from master branch", is_flag=True
 )
 @click.option(
     "-mt",
-    "--use-main-templates",
-    help="Copy _templates folder from main branch",
+    "--use-master-templates",
+    help="Copy _templates folder from master branch",
     is_flag=True,
 )
 @click.option(
@@ -359,6 +359,8 @@ def build(config, rel_source, destination, **options):
     if "pre" in config:
         config.pop("pre")(rel_source)
         config.update({k: v for k, v in options.items() if v})
+        if config.local_conf:
+            config.update(read_local_conf(config.local_conf), ignore_set=True)
     if NO_EXECUTE:
         raise RuntimeError(config, rel_source, destination)
     log = logging.getLogger(__name__)
@@ -422,7 +424,7 @@ def build(config, rel_source, destination, **options):
     # Pre-build.
     log.info("Pre-running Sphinx to collect versions' master_doc and other info.")
     exported_root = pre_build(
-        config.git_root, versions, config.use_main_conf, config.use_main_templates
+        config.git_root, versions, config.use_master_conf, config.use_master_templates
     )
     if config.banner_main_ref and config.banner_main_ref not in [
         r["name"] for r in versions.remotes

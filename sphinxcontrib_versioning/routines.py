@@ -137,7 +137,7 @@ def gather_git_info(root, conf_rel_paths, whitelist_branches, whitelist_tags):
     return whitelisted_remotes
 
 
-def pre_build(local_root, versions, use_main_conf=False, use_main_templates=False):
+def pre_build(local_root, versions, use_master_conf=False, use_master_templates=False):
     """Build docs for all versions to determine root directory and master_doc names.
 
     Need to build docs to (a) avoid filename collision with files from root_ref and branch/tag names and (b) determine
@@ -163,27 +163,27 @@ def pre_build(local_root, versions, use_main_conf=False, use_main_templates=Fals
 
     root_ref = Config.from_context().root_ref
 
-    # Copy conf.py from local main to all branches and tags
-    if use_main_conf:
-        main_remote = [r for r in list(versions.remotes) if r["name"] == root_ref]
-        assert len(main_remote) == 1
-        main_remote = main_remote[0]
-        main_conf_file = main_remote["conf_rel_path"]
+    # Copy conf.py from local master to all branches and tags
+    if use_master_conf:
+        master_remote = [r for r in list(versions.remotes) if r["name"] == root_ref]
+        assert len(master_remote) == 1
+        master_remote = master_remote[0]
+        master_conf_file = master_remote["conf_rel_path"]
         for remote in list(versions.remotes):
             import shutil
 
             filename = os.path.join(
                 exported_root, remote["sha"], remote["conf_rel_path"]
             )
-            shutil.copy(main_conf_file, filename)
+            shutil.copy(master_conf_file, filename)
 
-    if use_main_templates:
-        main_remote = [r for r in list(versions.remotes) if r["name"] == root_ref]
-        assert len(main_remote) == 1
-        main_remote = main_remote[0]
-        rel_path = os.path.dirname(main_remote["conf_rel_path"])
-        main_templates = os.path.join(rel_path, "_templates")
-        if os.path.exists(main_templates) and os.path.isdir(main_templates):
+    if use_master_templates:
+        master_remote = [r for r in list(versions.remotes) if r["name"] == root_ref]
+        assert len(master_remote) == 1
+        master_remote = master_remote[0]
+        rel_path = os.path.dirname(master_remote["conf_rel_path"])
+        master_templates = os.path.join(rel_path, "_templates")
+        if os.path.exists(master_templates) and os.path.isdir(master_templates):
             for remote in list(versions.remotes):
                 import shutil
 
@@ -192,7 +192,7 @@ def pre_build(local_root, versions, use_main_conf=False, use_main_templates=Fals
                 )
                 if os.path.exists(dst_path):
                     shutil.rmtree(dst_path)
-                shutil.copytree(main_templates, dst_path)
+                shutil.copytree(master_templates, dst_path)
 
     # Build root.
     remote = versions[root_ref]
